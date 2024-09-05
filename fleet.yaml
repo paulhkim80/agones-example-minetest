@@ -32,5 +32,5 @@ spec:
         spec:
           containers:
           - name: minetest
-            image: paulhkim80/agones-example-minetest:1.0.0
+            image: paulhkim80/agones-example-minetest:5.9.0
             

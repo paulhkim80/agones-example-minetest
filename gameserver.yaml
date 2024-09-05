@@ -24,5 +24,10 @@ spec:
     spec:
       containers:
       - name: minetest
-        image: paulhkim80/agones-example-minetest:1.0.0
-        # imagePullPolicy: Always # add for development
+        image: paulhkim80/agones-example-minetest:5.9.0
+        imagePullPolicy: Always # add for development
+        resources:
+          requests:
+            memory: "256Mi"
+          limits:
+            memory: "512Mi"
