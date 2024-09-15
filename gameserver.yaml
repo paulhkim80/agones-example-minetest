@@ -28,6 +28,6 @@ spec:
         imagePullPolicy: Always # add for development
         resources:
           requests:
-            memory: "256Mi"
+            memory: "1Gi"
           limits:
-            memory: "512Mi"
+            memory: "4Gi"
