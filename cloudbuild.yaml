@@ -1,4 +1,4 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'paulhkim80/agones-example-minetest:5.9.0', '.' ]
-images: ['paulhkim80/agones-example-minetest:5.9.0']
+  args: [ 'build', '-t', 'gcr.io/paulsandbox/agones-example-minetest:5.14.0', '.' ]
+images: ['gcr.io/paulsandbox/agones-example-minetest:5.14.0']

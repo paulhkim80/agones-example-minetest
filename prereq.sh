@@ -16,4 +16,6 @@
 
 # Replace with your project name
 export PROJECT_ID="paulsandbox"
+export CLOUDSDK_CORE_PROJECT=$PROJECT_ID
+
 export BUILD_MACHINE_TYPE="e2-highcpu-32"

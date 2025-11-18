@@ -21,17 +21,17 @@ FROM $MINETEST_BUILDER_IMAGE AS minetest_builder
 WORKDIR /usr/src/
 
 ARG LUAJIT_VERSION=v2.1
-ARG MINETEST_GAME_ENGINE_VERSION=5.9.0
+ARG LUANTI_VERSION=5.14.0
 ARG MINETEST_GAME_VERSION=5.8.0
 
 RUN apk add --no-cache git build-base cmake curl curl-dev zlib-dev zstd-dev \
 	sqlite-dev postgresql-dev hiredis-dev leveldb-dev \
 	gmp-dev jsoncpp-dev ninja ca-certificates && \
-	curl -o minetest-${MINETEST_GAME_ENGINE_VERSION}.tar.gz -L https://github.com/minetest/minetest/archive/refs/tags/${MINETEST_GAME_ENGINE_VERSION}.tar.gz && \
-	curl -o minetest-${MINETEST_GAME_VERSION}.tar.gz -L https://github.com/minetest/minetest_game/archive/refs/tags/${MINETEST_GAME_VERSION}.tar.gz && \
-	tar --strip-components=1 -xzf minetest-${MINETEST_GAME_ENGINE_VERSION}.tar.gz && \
+	curl -o luanti-${LUANTI_VERSION}.tar.gz -L https://github.com/luanti-org/luanti/archive/refs/tags/${LUANTI_VERSION}.tar.gz && \
+	curl -o minetest_game-${MINETEST_GAME_VERSION}.tar.gz -L https://github.com/luanti-org/minetest_game/archive/refs/tags/${MINETEST_GAME_VERSION}.tar.gz && \
+	tar --strip-components=1 -xzf luanti-${LUANTI_VERSION}.tar.gz && \
 	mkdir minetest_game && \
-	tar --strip-components=1 -xzf minetest-${MINETEST_GAME_VERSION}.tar.gz -C minetest_game/ && \
+	tar --strip-components=1 -xzf minetest_game-${MINETEST_GAME_VERSION}.tar.gz -C minetest_game/ && \
 	mkdir -p games/minetest_game && \
 	mv minetest_game/* games/minetest_game
 
@@ -57,13 +57,13 @@ RUN git clone --recursive https://github.com/jupp0r/prometheus-cpp && \
 				make amalg && make install && \
 		cd /usr/src/
 
-# Create the minetest directory
-RUN mkdir minetest
+# Create the luanti directory
+RUN mkdir luanti
 
 RUN cp -rf CMakeLists.txt README.md builtin cmake doc\
-	fonts lib misc po src irr textures minetest.conf.example /usr/src/minetest
+	fonts lib misc po src irr textures minetest.conf.example /usr/src/luanti
 
-WORKDIR /usr/src/minetest
+WORKDIR /usr/src/luanti
 RUN cmake -B build \
 				-DCMAKE_INSTALL_PREFIX=/usr/local \
 				-DCMAKE_BUILD_TYPE=Release \
@@ -95,9 +95,9 @@ WORKDIR /var/lib/minetest
 
 RUN mkdir -p /var/lib/minetest/.minetest/games
 
-COPY --from=minetest_builder /usr/local/share/minetest /usr/local/share/minetest
-COPY --from=minetest_builder /usr/local/bin/minetestserver /usr/local/bin/minetestserver
-COPY --from=minetest_builder /usr/local/share/doc/minetest/minetest.conf.example /etc/minetest/minetest.conf
+COPY --from=minetest_builder /usr/local/share/luanti /usr/local/share/luanti
+COPY --from=minetest_builder /usr/local/bin/luantiserver /usr/local/bin/luantiserver
+COPY --from=minetest_builder /usr/local/share/doc/luanti/minetest.conf.example /etc/minetest/minetest.conf
 COPY --from=minetest_builder /usr/src/games* /var/lib/minetest/.minetest/games
 COPY --from=minetest_builder /usr/local/lib/libspatialindex* /usr/local/lib/
 COPY --from=minetest_builder /usr/local/lib/libluajit* /usr/local/lib/
@@ -105,8 +105,8 @@ COPY --from=wrapper_builder /go/src/minetest/wrapper /usr/local/bin/wrapper
 COPY minetest.conf /etc/minetest/minetest.conf
 COPY minetestserver.sh /usr/local/bin/minetestserver.sh
 
-RUN chown -R minetest:minetest /usr/local/bin/wrapper /usr/local/share/minetest /var/lib/minetest/.minetest \
-    /usr/local/bin/minetestserver /usr/local/bin/minetestserver.sh /etc/minetest/minetest.conf \
+RUN chown -R minetest:minetest /usr/local/bin/wrapper /usr/local/share/luanti /var/lib/minetest/.minetest \
+    /usr/local/bin/luantiserver /usr/local/bin/minetestserver.sh /etc/minetest/minetest.conf \
 	/usr/local/lib
 
 USER minetest:minetest

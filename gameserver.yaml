@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: minetest
-        image: paulhkim80/agones-example-minetest:5.9.0
+        image: paulhkim80/agones-example-minetest:5.14.0
         imagePullPolicy: Always # add for development
         resources:
           requests:

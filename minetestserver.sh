@@ -15,6 +15,6 @@
 # limitations under the License.
 
 while true; do
-    /usr/local/bin/minetestserver "$@" 2>&1
+    /usr/local/bin/luantiserver "$@" 2>&1
     sleep 10
 done

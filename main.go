@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -26,21 +27,6 @@ import (
 
 	sdk "agones.dev/agones/sdks/go"
 )
-
-type interceptor struct {
-	forward   io.Writer
-	intercept func(p []byte)
-}
-
-// Write will intercept the incoming stream, and forward
-// the contents to its `forward` Writer.
-func (i *interceptor) Write(p []byte) (n int, err error) {
-	if i.intercept != nil {
-		i.intercept(p)
-	}
-
-	return i.forward.Write(p)
-}
 
 // main intercepts the stdout of the Minetest gameserver and uses it
 // to determine if the game server is ready or not.
@@ -62,33 +48,33 @@ func main() {
 	fmt.Println(">>> Starting wrapper for Minetest!")
 	fmt.Printf(">>> Path to Minetest server script: %s %v\n", *input, argsList)
 
-	// track references to listening count
-	listeningCount := 0
+	// We're going to use a pipe so we can read the stdout of the process
+	r, w := io.Pipe()
 
 	cmd := exec.Command(*input, argsList...) // #nosec
-	cmd.Stderr = &interceptor{forward: os.Stderr}
-	cmd.Stdout = &interceptor{
-		forward: os.Stdout,
-		intercept: func(p []byte) {
-			if listeningCount >= 1 {
-				return
-			}
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = io.MultiWriter(os.Stdout, w)
 
-			str := strings.TrimSpace(string(p))
-			// Minetest will say "listening on 0.0.0.0:30000" when ready.
-			if count := strings.Count(str, "listening on 0.0.0.0:30000"); count > 0 {
-				listeningCount += count
-				fmt.Printf(">>> Found 'listening' statement: %d \n", listeningCount)
-
-				if listeningCount >= 1 {
-					fmt.Printf(">>> Moving to READY: %s \n", str)
-					err = s.Ready()
-					if err != nil {
-						log.Fatalf("Could not send ready message")
-					}
+	// Use a scanner to read the output line by line
+	go func() {
+		scanner := bufio.NewScanner(r)
+		isReady := false
+		for scanner.Scan() {
+			line := scanner.Text()
+			// Minetest will say "listening on [::]:30000." when ready.
+			if !isReady && strings.HasSuffix(line, "listening on [::]:30000.") {
+				isReady = true
+				fmt.Printf(">>> Found 'listening' statement in line: '%s', marking server as ready.\n", line)
+				err := s.Ready()
+				if err != nil {
+					log.Fatalf("Could not send ready message: %v", err)
 				}
 			}
-		}}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Printf("Error reading stdout: %v", err)
+		}
+	}()
 
 	if err := cmd.Start(); err != nil {
 		log.Fatalf(">>> Error Starting Cmd %v", err)
